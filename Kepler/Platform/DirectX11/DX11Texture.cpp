@@ -94,7 +94,7 @@ namespace kepler {
 		}
 
 		// 텍스처 리소스 설정 및 raw image 해제
-		uint32_t pitch = m_width * 4;
+		uint32_t pitch = m_width * channel;
 		pDeviceContext->UpdateSubresource(m_pTexture, 0, nullptr, pRawImage, pitch, 0);
 		if (pRawImage)
 		{

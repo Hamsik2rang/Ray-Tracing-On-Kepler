@@ -34,15 +34,15 @@ VS_OUTPUT main(VS_INPUT input)
     output.Pos = mul(output.Pos, g_ViewProjection);
     
     output.Color = input.InstColor;
+    output.UV = input.UV;
     if (input.InstUVFlipX)
     {
-        input.UV.x *= -1.0f;
+        output.UV.x *= -1.0f;
     }
     if (input.InstUVFlipY)
     {
-        input.UV.y *= -1.0f;
+        output.UV.y *= -1.0f;
     }
-    output.UV = input.UV;
     
 	return output;
 }

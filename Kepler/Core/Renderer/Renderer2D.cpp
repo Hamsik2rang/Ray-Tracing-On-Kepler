@@ -133,7 +133,7 @@ namespace kepler {
 
 			if (batchData.pTexture)
 			{
-				batchData.pTexture->Bind(0);
+				batchData.pTexture->Bind();
 				pIB->SetLayout({
 					{"INST_COLOR", 0, EShaderDataType::Float4, 0, sizeof(float) * 4},
 					// sizeof(bool) == 4 in HLSL
@@ -152,6 +152,7 @@ namespace kepler {
 			vertexCount += static_cast<int>(4 * batchData.instanceCount);
 
 			m_pGraphicsAPI->DrawIndexedInstanced(batchData.pVertexArray, pIB);
+			delete[] batchData.pInstBuffer;
 		}
 		m_renderLog.trianglesCount.Add(static_cast<float>(trianglesCount));
 		m_renderLog.vertexCount.Add(static_cast<float>(vertexCount));
@@ -379,7 +380,6 @@ namespace kepler {
 		ShaderCache::GetShader("VSSolid")->Bind();
 		ShaderCache::GetShader("PSSolid")->Bind();
 
-		// TODO: empty shader!!
 		auto shaderDesc = IRenderState::Get()->GetShaderState();
 		shaderDesc.pVertexShader->SetMatrix("g_World", transform);
 		shaderDesc.pVertexShader->SetMatrix("g_ViewProjection", s_data.sceneData.viewProjection.Transpose());
@@ -416,6 +416,66 @@ namespace kepler {
 		drawCallsCount++;
 		trianglesCount += 2;
 		vertexCount += 4;
+	}
 
+	void Renderer2D::DrawNonBatchedQuad(const Vec2f& position, const float rotation, const Vec2f& size, const std::shared_ptr<ITexture2D>& texture, bool bFilpX, bool bFlipY, const Vec4f& color)
+	{
+		Mat44f transform = math::GetWorldMatrix({ position.x, position.y, 0.0f }, Quaternion::FromEuler({ 0.0f,  0.0f, rotation }), { size.x, size.y, 1.0f });
+
+		ShaderCache::GetShader("VSTexture")->Bind();
+		ShaderCache::GetShader("PSTexture")->Bind();
+
+		auto shaderDesc = IRenderState::Get()->GetShaderState();
+		shaderDesc.pVertexShader->SetMatrix("g_World", transform);
+		shaderDesc.pVertexShader->SetMatrix("g_ViewProjection", s_data.sceneData.viewProjection.Transpose());
+
+		texture->Bind();
+
+		float positions[]{
+			0.5f, 0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f,
+			-0.5f, -0.5f, 0.0f,
+			-0.5f, 0.5f, 0.0f
+		};
+
+		float uvs[]{
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f
+		};
+
+		Vec4f colors[]{ color, color, color, color };
+
+		uint32_t indices[]{
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		std::shared_ptr<IVertexBuffer> pPosBuffer = IVertexBuffer::Create(positions, sizeof(positions), EBufferUsage::Default);
+		pPosBuffer->SetLayout({
+			{ "POSITION", 0, EShaderDataType::Float3, 0, sizeof(float) * 3 }
+			});
+		std::shared_ptr<IVertexBuffer> pColorBuffer = IVertexBuffer::Create(colors, sizeof(colors), EBufferUsage::Default);
+
+		std::shared_ptr<IVertexBuffer> pUVBuffer = IVertexBuffer::Create(uvs, sizeof(uvs), EBufferUsage::Default);
+		pUVBuffer->SetLayout({
+			{ "TEXCOORD", 0, EShaderDataType::Float2, 0, sizeof(float) * 2}
+			
+			});
+		pColorBuffer->SetLayout({
+			{"COLOR", 0, EShaderDataType::Float4, 0, sizeof(Vec4f)}
+			});
+		std::shared_ptr<IIndexBuffer> pIB = IIndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t), EBufferUsage::Default);
+		std::shared_ptr<IVertexArray> pVA = IVertexArray::Create();
+		pVA->AddVertexBuffer(pPosBuffer);
+		pVA->AddVertexBuffer(pUVBuffer);
+		pVA->AddVertexBuffer(pColorBuffer);
+		pVA->SetIndexBuffer(pIB);
+
+		m_pGraphicsAPI->DrawIndexed(pVA);
+		drawCallsCount++;
+		trianglesCount += 2;
+		vertexCount += 4;
 	}
 }
