@@ -8,10 +8,13 @@ class ResearchLayer : public kepler::Layer
 private:
 	uint8_t* m_pBuffer;
 	std::shared_ptr<kepler::ITexture2D> m_pTexture;
-	kepler::Scene m_scene;
 	kepler::OrthographicCamera m_camera;
 
 	kepler::Entity* m_pPlane;
+
+	void BoxBlur(int repeatTime);
+	void GaussianBlur(float* blurBuffer1, int repeatTime);
+	void Bloom(const float th, const int repeatTime, const float weight);
 
 public:
 	ResearchLayer()

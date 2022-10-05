@@ -13,10 +13,6 @@ struct PS_INPUT
 float4 main(PS_INPUT input) : SV_TARGET
 {
     float4 color = g_Texture.Sample(g_LinearWrapState, input.UV);
-    if (color.a < 0.25f)
-    {
-        color.a = 0.0f;
-    }
     color *= input.Color;
 
     return color;

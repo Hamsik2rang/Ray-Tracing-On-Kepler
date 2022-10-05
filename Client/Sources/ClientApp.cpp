@@ -14,7 +14,7 @@ public:
 	~Client() = default;
 };
 
-kepler::Application* kepler::CreateApplication()
+kepler::Application* kepler::CreateApplication() 
 {
 	return new Client();
 }
